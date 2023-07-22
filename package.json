@@ -1,0 +1,23 @@
+{
+  "name": "helix-snippets-ls",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npm run build && npm link",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.4.0",
+    "typescript": "^5.1.6",
+    "vscode-languageserver": "^8.1.0",
+    "vscode-languageserver-textdocument": "^1.0.8"
+  },
+  "bin": {
+    "helix-snippets-ls": "./out/server.js"
+  }
+}
