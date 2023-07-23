@@ -11,17 +11,21 @@ import {
   DidChangeConfigurationNotification,
   InitializeParams,
   InitializeResult,
+  InsertTextFormat,
   TextDocumentPositionParams,
   TextDocuments,
   TextDocumentSyncKind
 
 } from "vscode-languageserver/node";
 
-console.log(`Inside lsp: ${new Date().toTimeString()}`);
 
 
-const contents = fs.readFileSync(`${os.homedir()}/.config/helix/snippets.toml`,"utf8");
-const snippets = toml.parse(contents);
+const configPath =  `${os.homedir()}/.config/helix`;
+const contents = fs.readFileSync(`${configPath}/snippets.toml`,"utf8");
+const snippetsConfig = toml.parse(contents);
+const {sources} = snippetsConfig;
+const snippetData = fs.readFileSync(`${configPath}/snippets/${sources.dirs[0]}/snippets/markdown.json`, 'utf8');
+const snippets = JSON.parse(snippetData);
 
 const connection = createConnection(process.stdin, process.stdout);
 
@@ -34,7 +38,6 @@ let hasWorkspaceFolderCapability: boolean = false;
 connection.onInitialize((params: InitializeParams) => {
   const capabilities = params.capabilities;
 
-  console.log("Initializing unity frontend lsp...");
   // Does the client support the `workspace/configuration` request?
   // If not, we fall back using global settings.
   hasConfigurationCapability = !!(
@@ -45,7 +48,13 @@ connection.onInitialize((params: InitializeParams) => {
   );
 
 
-  const triggerCharacters = Object.keys(snippets);
+  const triggers =  Object.keys(snippets)
+  .map((key) => {
+  return snippets[key].prefix;
+
+});
+
+  const triggerCharacters = triggers.flat();
 
   const result: InitializeResult = {
     capabilities: {
@@ -64,7 +73,6 @@ connection.onInitialize((params: InitializeParams) => {
       },
     };
   }
-  console.log(result);
   return result;
 });
 
@@ -94,11 +102,29 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Comp
     const line = String(content.split(/\r?\n/g)[linenr]);
     const character = textDocumentPosition.position.character;
 
+    const left = 0;
+    const right = line.length;
+    const range = {
+      start: {
+        line: linenr,
+        character: left,
+      },
+      end: {
+        line: linenr,
+        character: right,
+      },
+    };
+
     return Object.keys(snippets).map((key,idx) => {
-      const label = snippets[key];
+      const textResult = snippets[key].body;
       return {
-        label,
+        label:key,
         kind: CompletionItemKind.Snippet,
+        documentation: snippets[key].description,
+        // data: {
+        //   range,
+        //   textResult
+        // }
         data: idx + 1
       };
     });
@@ -110,23 +136,9 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Comp
   return [];
 });
 
-// This handler resolve additional information for the item selected in
-// the completion list.
 connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-  /*
-  if (item.data === 1) {
-    item.detail = 'TypeScript details',
-      item.documentation = 'TypeScript documentation'
-  } else if (item.data === 2) {
-    item.detail = 'JavaScript details',
-      item.documentation = 'JavaScript documentation'
-  }
-  */
   return item;
 });
-
-
-
 
 
 documents.listen(connection);
