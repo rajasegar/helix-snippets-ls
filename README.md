@@ -1,4 +1,7 @@
-# helix snippets ls
+# helix-snippets-ls
+
+[![npm version](http://img.shields.io/npm/v/helix-snippets-ls.svg?style=flat)](https://npmjs.org/package/helix-snippets-ls 'View this project on npm')
+
 Language server for snippets in Helix
 
 This package allows you to add snippets to the [Helix](https://helix-editor.com) editor
@@ -18,6 +21,7 @@ npm i -g helix-snippets-ls
 ### Usage
 Create an `snippets.toml` file inside your Helix config dir `~/.config/helix/snippets.toml`
 
+The snippets follow the [VSCode snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets) standard.
 Add snippets inside it like:
 
 ```toml
