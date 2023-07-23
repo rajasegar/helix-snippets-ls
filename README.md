@@ -21,11 +21,9 @@ Create an `snippets.toml` file inside your Helix config dir `~/.config/helix/sni
 Add snippets inside it like:
 
 ```toml
-hx = "Helix"
-lsp = "Language Server Protocol"
-cfg = "config"
-js = "JavaScript"
-ts = "TypeScript"
+li = "<li>$0</li>"
+img = "<img src=\"$1\" alt=\"$2\" />"
+inbx = "<AppInbox abc=\"$1\" xyz=\"$2\">$0</AppInbox>"
 ```
 
 ### Config
