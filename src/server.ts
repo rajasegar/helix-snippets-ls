@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-
+import * as fs from 'node:fs';
+import * as toml from 'toml';
+import * as os from 'node:os';
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   CompletionItem,
@@ -20,24 +22,9 @@ import {
 
 console.log(`Inside lsp: ${new Date().toTimeString()}`);
 
-    const snippets = [
-      {
-        "prefix": "ts",
-        "expansion": "TypeScript"
-      },
-      {
-        "prefix": "js",
-        "expansion": "JavaScript"
-      },
-      {
-        "prefix": "dt",
-        "expansion": new Date().toDateString()
-      },
-      {
-        "prefix": "info",
-        "expansion": "information"
-      }
-    ];
+
+const contents = fs.readFileSync(`${os.homedir()}/.config/helix/abbrevs.toml`,"utf8");
+const snippets = toml.parse(contents);
 
 const connection = createConnection(process.stdin, process.stdout);
 
@@ -61,7 +48,7 @@ connection.onInitialize((params: InitializeParams) => {
   );
 
 
-  const triggerCharacters = snippets.map(s => s.prefix);
+  const triggerCharacters = Object.keys(snippets);
 
   const result: InitializeResult = {
     capabilities: {
@@ -110,29 +97,15 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Comp
     const line = String(content.split(/\r?\n/g)[linenr]);
     const character = textDocumentPosition.position.character;
 
-    return snippets.map((s,idx) => {
+    return Object.keys(snippets).map((key,idx) => {
+      const label = snippets[key];
       return {
-        label: s.expansion,
+        label,
         kind: CompletionItemKind.Text,
         data: idx + 1
       };
     });
 
-      /*
-
-    return [
-        {
-            label: 'TypeScript',
-            kind: CompletionItemKind.Text,
-            data: 1
-        },
-        {
-            label: 'JavaScript',
-            kind: CompletionItemKind.Text,
-            data: 2
-        }
-    ]
-    */
 
     /*
     const left = 0;
