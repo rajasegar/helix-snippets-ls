@@ -7,7 +7,7 @@ const os = require("node:os");
 const vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
 const node_1 = require("vscode-languageserver/node");
 console.log(`Inside lsp: ${new Date().toTimeString()}`);
-const contents = fs.readFileSync(`${os.homedir()}/.config/helix/abbrevs.toml`, "utf8");
+const contents = fs.readFileSync(`${os.homedir()}/.config/helix/snippets.toml`, "utf8");
 const snippets = toml.parse(contents);
 const connection = (0, node_1.createConnection)(process.stdin, process.stdout);
 //Create a simple text document manager
@@ -68,46 +68,10 @@ connection.onCompletion((textDocumentPosition) => {
             const label = snippets[key];
             return {
                 label,
-                kind: node_1.CompletionItemKind.Text,
+                kind: node_1.CompletionItemKind.Snippet,
                 data: idx + 1
             };
         });
-        /*
-        const left = 0;
-        const right = line.length;
-        const abbreviation = "fc-ai";
-    
-        const range = {
-          start: {
-            line: linenr,
-            character: left,
-          },
-          end: {
-            line: linenr,
-            character: right,
-          },
-        };
-    
-        const textResult = "<AppInbox abc=\"$1\" xyz=\"$2\">$0</AppInbox>"
-        return [
-          {
-            insertTextFormat: InsertTextFormat.Snippet,
-            label: abbreviation,
-            detail: abbreviation,
-            documentation: textResult,
-            textEdit: {
-              range,
-              newText: textResult,
-              // newText: textResult.replace(/\$\{\d*\}/g,''),
-            },
-            kind: CompletionItemKind.Snippet,
-            data: {
-              range,
-              textResult,
-            },
-          },
-        ];
-        */
     }
     catch (error) {
         connection.console.log(`ERR: ${error}`);

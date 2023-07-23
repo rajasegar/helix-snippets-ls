@@ -11,10 +11,7 @@ import {
   DidChangeConfigurationNotification,
   InitializeParams,
   InitializeResult,
-  InsertTextFormat,
-  ProposedFeatures,
   TextDocumentPositionParams,
-  TextDocumentIdentifier,
   TextDocuments,
   TextDocumentSyncKind
 
@@ -23,7 +20,7 @@ import {
 console.log(`Inside lsp: ${new Date().toTimeString()}`);
 
 
-const contents = fs.readFileSync(`${os.homedir()}/.config/helix/abbrevs.toml`,"utf8");
+const contents = fs.readFileSync(`${os.homedir()}/.config/helix/snippets.toml`,"utf8");
 const snippets = toml.parse(contents);
 
 const connection = createConnection(process.stdin, process.stdout);
@@ -101,48 +98,11 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Comp
       const label = snippets[key];
       return {
         label,
-        kind: CompletionItemKind.Text,
+        kind: CompletionItemKind.Snippet,
         data: idx + 1
       };
     });
-
-
-    /*
-    const left = 0;
-    const right = line.length;
-    const abbreviation = "fc-ai";
-
-    const range = {
-      start: {
-        line: linenr,
-        character: left,
-      },
-      end: {
-        line: linenr,
-        character: right,
-      },
-    };
-
-    const textResult = "<AppInbox abc=\"$1\" xyz=\"$2\">$0</AppInbox>"
-    return [
-      {
-        insertTextFormat: InsertTextFormat.Snippet,
-        label: abbreviation,
-        detail: abbreviation,
-        documentation: textResult,
-        textEdit: {
-          range,
-          newText: textResult,
-          // newText: textResult.replace(/\$\{\d*\}/g,''),
-        },
-        kind: CompletionItemKind.Snippet,
-        data: {
-          range,
-          textResult,
-        },
-      },
-    ];
-    */
+    
   } catch (error) {
     connection.console.log(`ERR: ${error}`);
   }
