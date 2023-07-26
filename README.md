@@ -28,6 +28,13 @@ Add snippets inside it like:
 li = "<li>$0</li>"
 img = "<img src=\"$1\" alt=\"$2\" />"
 inbx = "<AppInbox abc=\"$1\" xyz=\"$2\">$0</AppInbox>"
+
+# Multiline snippets
+for = """for await (const ${1:iterator} of ${2:object}) {
+      \t$0
+      }"""
+sim = "setImmediate(() => {\n\t${0}\n})"
+
 ```
 
 ### Config

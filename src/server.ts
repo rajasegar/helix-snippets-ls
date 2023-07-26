@@ -17,13 +17,13 @@ import {
 
 } from "vscode-languageserver/node";
 
-console.log(`Inside lsp: ${new Date().toTimeString()}`);
 
 
 const contents = fs.readFileSync(`${os.homedir()}/.config/helix/snippets.toml`,"utf8");
 const snippets = toml.parse(contents);
 
 const connection = createConnection(process.stdin, process.stdout);
+connection.console.log(`Inside lsp: ${new Date().toTimeString()}`);
 
 //Create a simple text document manager
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -34,7 +34,7 @@ let hasWorkspaceFolderCapability: boolean = false;
 connection.onInitialize((params: InitializeParams) => {
   const capabilities = params.capabilities;
 
-  console.log("Initializing unity frontend lsp...");
+  connection.console.log("Initializing helix-snippets lsp...");
   // Does the client support the `workspace/configuration` request?
   // If not, we fall back using global settings.
   hasConfigurationCapability = !!(
