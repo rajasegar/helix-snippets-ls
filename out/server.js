@@ -6,41 +6,82 @@ const toml = require("toml");
 const os = require("node:os");
 const vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
 const node_1 = require("vscode-languageserver/node");
-console.log(`Inside lsp: ${new Date().toTimeString()}`);
-const contents = fs.readFileSync(`${os.homedir()}/.config/helix/snippets.toml`, "utf8");
-const snippets = toml.parse(contents);
+const logger_1 = require("./logger");
+const logger = new logger_1.default();
+const configPath = `${os.homedir()}/.config/helix`;
+logger.log(`Config:  ${configPath}`);
+const contents = fs.readFileSync(`${configPath}/snippets.toml`, "utf8");
+const snippetsConfig = toml.parse(contents);
+const { sources } = snippetsConfig;
+logger.log(`Sources: ${sources.dirs[0]}`);
+const snippetData = fs.readFileSync(`${configPath}/snippets/${sources.dirs[0]}/snippets/markdown.json`, 'utf8');
+const snippets = JSON.parse(snippetData);
 const connection = (0, node_1.createConnection)(process.stdin, process.stdout);
 //Create a simple text document manager
 const documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
-connection.onInitialize((params) => {
-    const capabilities = params.capabilities;
-    console.log("Initializing unity frontend lsp...");
-    // Does the client support the `workspace/configuration` request?
-    // If not, we fall back using global settings.
-    hasConfigurationCapability = !!(capabilities.workspace && !!capabilities.workspace.configuration);
-    hasWorkspaceFolderCapability = !!(capabilities.workspace && !!capabilities.workspace.workspaceFolders);
-    const triggerCharacters = Object.keys(snippets);
-    const result = {
+// Function to provide snippet completions
+function provideCompletionItems(params) {
+    const document = documents.get(params.textDocument.uri);
+    // Retrieve snippets from the extension settings
+    const snippets = getSnippetsFromSettings();
+    // Process snippets and convert them into CompletionItem objects
+    const completionItems = snippets.map((snippet) => {
+        const completionItem = {
+            label: snippet.prefix,
+            kind: node_1.CompletionItemKind.Snippet,
+            insertText: snippet.body,
+        };
+        return completionItem;
+    });
+    return completionItems;
+}
+// Function to get snippets from user settings or extensions
+function getSnippetsFromSettings() {
+    // You may need to implement this function based on how the snippets are stored in settings or extensions.
+    // For simplicity, let's assume we have hardcoded snippets here.
+    const newSnippets = [];
+    // Transform snippets for prefix array values
+    Object.keys(snippets).forEach(k => {
+        const { prefix, body, description } = snippets[k];
+        if (Array.isArray(prefix)) {
+            prefix.forEach(p => {
+                newSnippets.push({
+                    prefix: p,
+                    body: Array.isArray(body) ? body.join('\n') : body,
+                    description
+                });
+            });
+        }
+        else {
+            newSnippets.push({
+                prefix,
+                body: Array.isArray(body) ? body.join('\n') : body,
+                description
+            });
+        }
+    });
+    logger.log(JSON.stringify(newSnippets));
+    return newSnippets;
+    /*
+      return [
+      { prefix: 'for', body: 'for (let i = 0; i < array.length; i++) {\n\t$1\n}' },
+      { prefix: 'if', body: 'if ($1) {\n\t$2\n}' },
+      { prefix: "h1", body: "# ${0}" },
+      // Add more snippets here as needed
+    ];
+    */
+}
+connection.onInitialize(() => {
+    return {
         capabilities: {
             textDocumentSync: node_1.TextDocumentSyncKind.Incremental,
-            // Tell the client that this server supports code completion.
             completionProvider: {
                 resolveProvider: true,
-                triggerCharacters: triggerCharacters,
             },
         },
     };
-    if (hasWorkspaceFolderCapability) {
-        result.capabilities.workspace = {
-            workspaceFolders: {
-                supported: true,
-            },
-        };
-    }
-    console.log(result);
-    return result;
 });
 connection.onInitialized(() => {
     if (hasConfigurationCapability) {
@@ -53,43 +94,8 @@ connection.onInitialized(() => {
         });
     }
 });
-// This handler provides the initial list of the completion items.
-connection.onCompletion((textDocumentPosition) => {
-    try {
-        const docs = documents.get(textDocumentPosition.textDocument.uri);
-        if (!docs)
-            throw "failed to find document";
-        const languageId = docs.languageId;
-        const content = docs.getText();
-        const linenr = textDocumentPosition.position.line;
-        const line = String(content.split(/\r?\n/g)[linenr]);
-        const character = textDocumentPosition.position.character;
-        return Object.keys(snippets).map((key, idx) => {
-            const label = snippets[key];
-            return {
-                label,
-                kind: node_1.CompletionItemKind.Snippet,
-                data: idx + 1
-            };
-        });
-    }
-    catch (error) {
-        connection.console.log(`ERR: ${error}`);
-    }
-    return [];
-});
-// This handler resolve additional information for the item selected in
-// the completion list.
+connection.onCompletion(provideCompletionItems);
 connection.onCompletionResolve((item) => {
-    /*
-    if (item.data === 1) {
-      item.detail = 'TypeScript details',
-        item.documentation = 'TypeScript documentation'
-    } else if (item.data === 2) {
-      item.detail = 'JavaScript details',
-        item.documentation = 'JavaScript documentation'
-    }
-    */
     return item;
 });
 documents.listen(connection);
